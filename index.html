@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-image: url('tu_foto.jpg'); /* Reemplaza 'tu_foto.jpg' con el nombre de tu imagen */
+            background-size: cover;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        canvas {
+            border: 2px solid #000;
+            background-color: #f0f0f0;
+        }
+
+        #gameTitle {
+            position: absolute;
+            font-size: 24px;
+            color: #fff;
+        }
+    </style>
+    <title>Tetris</title>
+</head>
+<body>
+
+    <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+    <div id="gameTitle">Tetris</div>
+
+    <script>
+        const canvas = document.getElementById('tetrisCanvas');
+        const context = canvas.getContext('2d');
+
+        const ROWS = 20;
+        const COLUMNS = 10;
+        const BLOCK_SIZE = 30;
+
+        const board = Array.from({ length: ROWS }, () => Array(COLUMNS).fill(0));
+
+        // Definir las piezas tetrimino
+        const tetriminoes = [
+            { shape: [[1, 1, 1, 1]], color: 'blue' }, // I
+            { shape: [[1, 1, 1], [1]], color: 'orange' }, // L
+            { shape: [[1, 1, 1], [0, 0, 1]], color: 'cyan' }, // J
+            { shape: [[1, 1, 1], [0, 1]], color: 'yellow' }, // T
+            { shape: [[1, 1], [1, 1]], color: 'red' }, // O
+            { shape: [[1, 1, 1], [1, 0]], color: 'green' }, // S
+            { shape: [[1, 1, 1], [0, 1]], color: 'purple' }, // Z
+        ];
+
+        let piece = getRandomPiece();
+
+        // Función para obtener una pieza aleatoria
+        function getRandomPiece() {
+            const randomIndex = Math.floor(Math.random() * tetriminoes.length);
+            return { ...tetriminoes[randomIndex], x: 0, y: 0, rotation: 0 };
+        }
+
+        // Función para rotar una pieza
+        function rotatePiece() {
+            const originalShape = piece.shape;
+            piece.rotation = (piece.rotation + 1) % 4;
+            piece.shape = rotateMatrix(originalShape);
+            if (collision()) {
+                // Si hay una colisión después de la rotación, restaura la forma original
+                piece.shape = originalShape;
+                piece.rotation = (piece.rotation - 1 + 4) % 4;
+            }
+        }
+
+        // Función para rotar una matriz
+        function rotateMatrix(matrix) {
+            return matrix[0].map((_, i) => matrix.map(row => row[i])).reverse();
+        }
+
+        // Función para dibujar una pieza
+        function drawPiece() {
+            context.fillStyle = piece.color;
+            piece.shape.forEach((row, rowIndex) => {
+                row.forEach((value, colIndex) => {
+                    if (value) {
+                        context.fillRect((piece.x + colIndex) * BLOCK_SIZE, (piece.y + rowIndex) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        context.strokeStyle = 'white';
+                        context.strokeRect((piece.x + colIndex) * BLOCK_SIZE, (piece.y + rowIndex) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                });
+            });
+        }
+
+        // Función para limpiar el tablero
+        function clearBoard() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Función para dibujar el tablero y la pieza
+        function draw() {
+            clearBoard();
+            drawBoard();
+            drawPiece();
+        }
+
+        // Función para dibujar el tablero
+        function drawBoard() {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLUMNS; col++) {
+                    if (board[row][col]) {
+                        context.fillStyle = 'blue'; // Color de las celdas ocupadas
+                        context.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        context.strokeStyle = 'white';
+                        context.strokeRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                }
+            }
+        }
+
+        // Función para manejar la lógica del juego
+        function update() {
+            piece.y++;
+            if (collision()) {
+                piece.y--;
+                mergePiece();
+                piece = getRandomPiece();
+                if (collision()) {
+                    // Si una nueva pieza colisiona al aparecer, el juego termina
+                    alert('Game Over');
+                    resetGame();
+                }
+            }
+        }
+
+        // Función para manejar colisiones
+        function collision() {
+            for (let rowIndex = 0; rowIndex < piece.shape.length; rowIndex++) {
+                for (let colIndex = 0; colIndex < piece.shape[0].length; colIndex++) {
+                    if (
+                        piece.shape[rowIndex][colIndex] &&
+                        (board[piece.y + rowIndex] && board[piece.y + rowIndex][piece.x + colIndex]) !== 0
+                    ) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Función para fusionar la pieza con el tablero
+        function mergePiece() {
+            piece.shape.forEach((row, rowIndex) => {
+                row.forEach((value, colIndex) => {
+                    if (value) {
+                        board[piece.y + rowIndex][piece.x + colIndex] = 1;
+                    }
+                });
+            });
+            checkForLineClear();
+        }
+
+        // Función para comprobar si hay líneas completas y borrarlas
+        function checkForLineClear() {
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (board[row].every(cell => cell !== 0)) {
+                    // Borra la línea y desplaza las líneas superiores hacia abajo
+                    board.splice(row, 1);
+                    board.unshift(Array(COLUMNS).fill(0));
+                }
+            }
+        }
+
+        // Función para reiniciar el juego
+        function resetGame() {
+            board.forEach(row => row.fill(0));
+            piece = getRandomPiece();
+        }
+
+        // Función principal del juego
+        function gameLoop() {
+            update();
+            draw();
+        }
+
+        // Llamada inicial para iniciar el juego
+        setInterval(gameLoop, 500); // Ajusta la velocidad del juego aquí
+
+        // Manejar las teclas de flecha y la barra espaciadora para controlar la pieza
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft' && piece.x > 0) {
+                piece.x--;
+                if (collision()) {
+                    piece.x++;
+                }
+            } else if (event.key === 'ArrowRight' && piece.x < COLUMNS - piece.shape[0].length) {
+                piece.x++;
+                if (collision()) {
+                    piece.x--;
+                }
+            } else if (event.key === 'ArrowDown') {
+                // Acelera la caída de la pieza
+                piece.y++;
+                if (collision()) {
+                    piece.y--;
+                    mergePiece();
+                    piece = getRandomPiece();
+                    if (collision()) {
+                        // Si una nueva pieza colisiona al aparecer, el juego termina
+                        alert('Game Over');
+                        resetGame();
+                    }
+                }
+            } else if (event.key === ' ') {
+                // Gira la pieza
+                rotatePiece();
+            }
+        });
+
+        // Manejar eventos táctiles para dispositivos móviles
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', (event) => {
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', (event) => {
+            const touchEndX = event.changedTouches[0].clientX;
+            const touchEndY = event.changedTouches[0].clientY;
+
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Movimiento horizontal
+                if (deltaX > 0) {
+                    // Desplazamiento hacia la derecha
+                    piece.x++;
+                    if (collision()) {
+                        piece.x--;
+                    }
+                } else {
+                    // Desplazamiento hacia la izquierda
+                    piece.x--;
+                    if (collision()) {
+                        piece.x++;
+                    }
+                }
+            } else {
+                // Movimiento vertical
+                if (deltaY > 0) {
+                    // Desplazamiento hacia abajo
+                    piece.y++;
+                    if (collision()) {
+                        piece.y--;
+                        mergePiece();
+                        piece = getRandomPiece();
+                        if (collision()) {
+                            // Si una nueva pieza colisiona al aparecer, el juego termina
+                            alert('Game Over');
+                            resetGame();
+                        }
+                    }
+                } else {
+                    // Giro de la pieza
+                    rotatePiece();
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
