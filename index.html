@@ -1,11 +1,12 @@
+Claro, aquí tienes el código HTML actualizado con una nota de "Hecho por Fredy A. Peláez" visible en la página. He añadido un pequeño footer para este propósito.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        
-    
         body {
             margin: 0;
             overflow: hidden;
@@ -16,6 +17,7 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
+            flex-direction: column;
         }
 
         canvas {
@@ -25,19 +27,28 @@
 
         #gameTitle {
             position: absolute;
+            top: 10px;
             font-size: 24px;
             color: #000;
+        }
+
+        footer {
+            position: absolute;
+            bottom: 10px;
+            font-size: 14px;
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
         }
     </style>
     <title>Tetris</title>
 </head>
-<body>
-
-    <body oncontextmenu="return false;">
-
+<body oncontextmenu="return false;">
 
     <canvas id="tetrisCanvas" width="300" height="600"></canvas>
-    <div id="gameTitle"></div>
+    <div id="gameTitle">Tetris</div>
+    <footer>Hecho por Fredy A. Peláez</footer>
 
     <script>
         const canvas = document.getElementById('tetrisCanvas');
@@ -240,7 +251,9 @@
             const deltaX = touchEndX - touchStartX;
             const deltaY = touchEndY - touchStartY;
 
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            if (Math.abs(deltaX) >
+
+ Math.abs(deltaY)) {
                 // Movimiento horizontal
                 if (deltaX > 0) {
                     // Desplazamiento hacia la derecha
@@ -277,7 +290,8 @@
             }
         });
     </script>
-    
-
 </body>
 </html>
+```
+
+Este código añade un `footer` al final de la página con el texto "Hecho por Fredy A. Peláez". El footer se posiciona en la parte inferior de la página y tiene un estilo de fondo semi-transparente para garantizar que el texto sea legible sobre cualquier imagen de fondo.
